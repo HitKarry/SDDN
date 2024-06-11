@@ -1,0 +1,1 @@
+Please download Cldas 2.0 data from the following website: https://data.cma.cn/data/cdcdetail/dataCode/NAFP_CLDAS2.0_NRT.html

@@ -19,7 +19,7 @@ class AutomaticWeightedLoss(nn.Module):
     def __init__(self, num=6):
         super(AutomaticWeightedLoss, self).__init__()
         params = torch.ones(num, requires_grad=True)
-        self.params = torch.nn.Parameter(params)  # parameters的封装使得变量可以容易访问到
+        self.params = torch.nn.Parameter(params)  
 
     def forward(self, *x):
         loss_sum = 0
@@ -28,7 +28,6 @@ class AutomaticWeightedLoss(nn.Module):
                 loss_sum += 0.5 * torch.exp(-self.params[i]) * loss + self.params[i]
             else:
                 loss_sum += torch.exp(-self.params[i]) * loss + self.params[i]
-        # +1 avoids the problem of log 0. The log sigma part has little impact on the overall loss
         return loss_sum,self.params.detach()
 
 class Trainer:
@@ -159,7 +158,6 @@ class Trainer:
                 if j % self.configs.display_interval == 0:
                     print('batch training loss: {:.3f},weight: {:.3f} {:.3f} {:.3f} {:.3f} {:.3f} {:.3f}'.format(batch_loss,weight[0],weight[1],weight[2],weight[3],weight[4],weight[5]))
 
-                # increase the number of evaluations in order not to miss the optimal point
                 if (i+1 >= 11) and (j+1)%120 == 0:
                     _, sc_loss1, _ = self.test(dataloader_eval)
                     print('epoch eval loss: {:.4f}'.format(sc_loss1))
@@ -168,7 +166,6 @@ class Trainer:
                         best = sc_loss1
                         count = 0
 
-            # evaluation
             _, loss_eval, loss_eval2 = self.test(dataloader_eval)
             print('epoch eval loss: {:.3f}, inter loss: {:.3f}'.format(loss_eval,loss_eval2))
             if loss_eval >= best:
@@ -222,8 +219,8 @@ if __name__ == '__main__':
     print(configs.__dict__)
 
     print('\nreading data')
-    lr = np.load('../../data/lr_data_rh850_z500_t850_X8.npz')
-    hr = np.load('../../data/lr_data_rh850_z500_t850_X2.npz')
+    lr = np.load('../../data/X8.npz')
+    hr = np.load('../../data/X2.npz')
     data_lr,data_hr = lr['data'], hr['data']
 
     print('\ndata normalization')
@@ -232,60 +229,45 @@ if __name__ == '__main__':
     print('data_std', data_std)
 
     print('processing training set')
-    dataset_train = dataset_generator(data_lr[:1080],data_hr[:1080])
+    dataset_train = dataset_generator(data_lr[:XX],data_hr[:XX])
     print(dataset_train.GetDataShape())
 
     print('processing eval set')
-    dataset_eval = dataset_generator(data_lr[1080:],data_hr[1080:])
+    dataset_eval = dataset_generator(data_lr[XX:XX],data_hr[XX:XX])
     print(dataset_eval.GetDataShape())
 
-    # del data_lr, data_hr
-    #
-    # trainer = Trainer(configs)
-    # trainer.save_configs('config_train.pkl3')
-    # trainer.train(dataset_train, dataset_eval, '.chk3')
+    del data_lr, data_hr
+    
+    trainer = Trainer(configs)
+    trainer.save_configs('config_train.pkl')
+    trainer.train(dataset_train, dataset_eval, '.chk')
 
     #########################################################################################################################################
 
-    # model = SDSRNET(configs).to(configs.device)
-    # net = torch.load('checkpoint_0.047168456.chk3')
-    # model.load_state_dict(net['net'])
-    # model.eval()
-    #
-    # data = DataLoader(dataset_eval, batch_size=3, shuffle=False)
-    #
-    # starttime = datetime.datetime.now()
-    # with torch.no_grad():
-    #     for i,(lr,hr) in enumerate(data):
-    #         pred_temp = model(lr.float().to(configs.device))
-    #         if i == 0:
-    #             pred = pred_temp
-    #             label = hr
-    #         else:
-    #             pred = torch.cat((pred, pred_temp), 0)
-    #             label = torch.cat((label, hr), 0)
-    # endtime = datetime.datetime.now()
-    # print('SPEND TIME:', endtime - starttime)
-    #
-    # ILR = F.interpolate(torch.tensor(data_lr), scale_factor=8, mode='bilinear', align_corners=False)
-    #
-    # np.savez('result047168456.npz', ilr=ILR*data_std[None, :, None, None]+data_mean[None, :, None, None], sr=pred.cpu()*data_std[None, :, None, None]+data_mean[None, :, None, None], hr=label.cpu()*data_std[None, :, None, None]+data_mean[None, :, None, None])
+    model = SDSRNET(configs).to(configs.device)
+    net = torch.load('checkpoint.chk')
+    model.load_state_dict(net['net'])
+    model.eval()
+    
+    print('processing test set')
+    dataset_test = dataset_generator(data_lr[XX:],data_hr[XX:])
+    print(dataset_test.GetDataShape())
 
-
-#########################################################################################################################################
-
-    data = DataLoader(dataset_eval, batch_size=3, shuffle=False)
-
+    data = DataLoader(dataset_test, batch_size=8, shuffle=False)
+    
+    starttime = datetime.datetime.now()
     with torch.no_grad():
         for i,(lr,hr) in enumerate(data):
+            pred_temp = model(lr.float().to(configs.device))
             if i == 0:
+                pred = pred_temp
                 label = hr
             else:
+                pred = torch.cat((pred, pred_temp), 0)
                 label = torch.cat((label, hr), 0)
-
-    ILR = F.interpolate(torch.tensor(data_lr[1080:]), scale_factor=4, mode='bilinear', align_corners=False)
-
-    ILR2 = F.interpolate(torch.tensor(data_lr[1080:]), scale_factor=4, mode='bicubic', align_corners=False)
-
-    np.savez('result_interpolate.npz', ilr_bilinear=ILR * data_std[None, :, None, None] + data_mean[None, :, None, None],ilr_bicubic=ILR2 * data_std[None, :, None, None] + data_mean[None, :, None, None],
-             hr=label.cpu() * data_std[None, :, None, None] + data_mean[None, :, None, None])
+    endtime = datetime.datetime.now()
+    print('SPEND TIME:', endtime - starttime)
+    
+    ILR = F.interpolate(torch.tensor(data_lr), scale_factor=8, mode='bilinear', align_corners=False)
+    
+    np.savez('result.npz', ilr=ILR*data_std[None, :, None, None]+data_mean[None, :, None, None], sr=pred.cpu()*data_std[None, :, None, None]+data_mean[None, :, None, None], hr=label.cpu()*data_std[None, :, None, None]+data_mean[None, :, None, None])

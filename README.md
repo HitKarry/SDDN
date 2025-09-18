@@ -2,4 +2,17 @@
 
 The scale of meteorological data products does not match the requirements of application scenarios, which limits their application. It is suggested that large-scale reanalysis data must be downscaled before use. Attention mechanism is the key to high-performance downscaling models. However, in different application scenarios and different locations on the network, the attention mechanism is not always beneficial. In this paper, we propose a dynamic attention module that can adaptively generate weights for each branch based on input features, thereby dynamically suppressing unnecessary attention adjustments. At the same time, we propose a layer attention module, which can independently and adaptively aggregate the feature representation of different network layers. In addition, we design a unique loss function based on homoscedasticity uncertainty, which can directly guide the model to learn the numerical mapping relationship from low resolution to high resolution at the pixel level, and implicitly motivate the model to better reconstruct the data distribution of each meteorological field by guiding the model to learn the distribution difference of the difference between different meteorological fields. Experiments show that our model is more robust in time dimension, with an MAE average reduction of about 40% compared to VDSR and other methods in downscaling composite meteorological data.
 
-![image](https://raw.gitmirror.com/HitKarry/SDDN/main/Figure.png)
+
+@article{WANG2024157,
+title = {Deep neural network based on dynamic attention and layer attention for meteorological data downscaling},
+journal = {ISPRS Journal of Photogrammetry and Remote Sensing},
+volume = {215},
+pages = {157-176},
+year = {2024},
+issn = {0924-2716},
+doi = {https://doi.org/10.1016/j.isprsjprs.2024.06.020},
+url = {https://www.sciencedirect.com/science/article/pii/S0924271624002582},
+author = {Junkai Wang and Lianlei Lin and Zongwei Zhang and Sheng Gao and Hangyi Yu},
+keywords = {Multivariate meteorological data, Dynamic attention, Layer attention, Uncertainty loss, Spatial downscaling},
+abstract = {The scale of meteorological data products does not match the requirements of application scenarios, which limits their application. It is suggested that large-scale reanalysis data must be downscaled before use. Attention mechanism is the key to high-performance downscaling models. However, in different application scenarios and different locations on the network, the attention mechanism is not always beneficial. In this paper, we propose a dynamic attention module that can adaptively generate weights for each branch based on input features, thereby dynamically suppressing unnecessary attention adjustments. At the same time, we propose a layer attention module, which can independently and adaptively aggregate the feature representation of different network layers. In addition, we design a unique loss function based on homoscedasticity uncertainty, which can directly guide the model to learn the numerical mapping relationship from low resolution to high resolution at the pixel level, and implicitly motivate the model to better reconstruct the data distribution of each meteorological field by guiding the model to learn the distribution difference between different meteorological fields. Experiments show that our model is more robust in time dimension, with an MAE average reduction of about 40% compared to VDSR and other methods in downscaling composite meteorological data. It can more accurately reconstruct multivariate high-resolution meteorological fields. Codes available at https://github.com/HitKarry/SDDN.}
+}
